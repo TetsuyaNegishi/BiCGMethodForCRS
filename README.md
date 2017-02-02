@@ -5,9 +5,9 @@ CRS形式で行列を保存し、Bi-CG法によって連立一次方程式を解
 ## Usage
 
 ```
-gfortran crs_bicg.f90 -o crs_bicg
-./ex.sh
-gnuplot plot.g
+$ gfortran crs_bicg.f90 -o crs_bicg
+$ ./ex.sh
+$ gnuplot plot.g
 ```
 
 ## Output
