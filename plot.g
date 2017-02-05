@@ -1,7 +1,6 @@
 # plot.g -- gnuplot コマンド・ファイル
 set term postscript eps color enhanced
 set output "./bicg.eps"
-set title "bicg met"
 set xrange[0:100]
 set xlabel "Number of Iterations"
 set logscale y
