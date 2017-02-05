@@ -64,6 +64,36 @@ contains
         end function get_row
 
     end function hermitian
+
+    subroutine bicg_method(matrix, b, x)
+        type(crs), intent(in) :: matrix
+        complex(8), intent(in) :: b(:)
+        complex(8), allocatable, intent(out) :: x(:)
+        complex(8), allocatable :: r(:), rs(:), q(:), qs(:), p(:), ps(:)
+        complex(8) :: dot_product_r, alpha, beta
+        integer :: dim
+
+        dim = size(b)
+        allocate(x(dim), r(dim), rs(dim), q(dim), qs(dim), p(dim), ps(dim))
+        x = 0.0d0
+        r = b - matvec(matrix, x)
+        rs = 1.0d0
+        p = r
+
+        q = matvec(matrix, p)
+        qs = matvec(hermitian(matrix) , ps)
+        dot_product_r = dot_product(rs, r)
+        alpha = dot_product_r / dot_product(ps, q)
+        x = x + alpha * p
+        r = r - alpha * q
+        rs = rs - conjg(alpha) * qs
+        beta = dot_product(rs, r) / dot_product_r
+        p = r + beta * p
+        ps = rs + conjg(beta) * ps
+
+        deallocate(r, rs, q, qs, p, ps)
+
+    end subroutine bicg_method
 end module crs_matrix
 
 program main
