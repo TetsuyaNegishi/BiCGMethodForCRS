@@ -3,7 +3,8 @@ module crs_matrix
         complex(8), allocatable :: val(:)
         integer, allocatable :: col_ind(:), row_ptr(:)
     end type crs
-
+    integer, parameter :: MAX_ITER = 1000
+    real(8), parameter :: MIN_ERROR = 10.d0 ** (-12)
 contains
 
     function matvec(matrix, vec) result(r)
@@ -65,13 +66,20 @@ contains
 
     end function hermitian
 
-    subroutine bicg_method(matrix, b, x)
+    function norm(vec) result(r)
+        complex(8) :: vec(:)
+        real(8) :: r
+        r = dsqrt(real(dot_product(vec, vec)))
+    end function norm
+
+    subroutine bicg_method(matrix, b)
         type(crs), intent(in) :: matrix
         complex(8), intent(in) :: b(:)
-        complex(8), allocatable, intent(out) :: x(:)
+        complex(8), allocatable :: x(:)
         complex(8), allocatable :: r(:), rs(:), q(:), qs(:), p(:), ps(:)
         complex(8) :: dot_product_r, alpha, beta
-        integer :: dim
+        integer :: dim, iter
+        real(8) :: error
 
         dim = size(b)
         allocate(x(dim), r(dim), rs(dim), q(dim), qs(dim), p(dim), ps(dim))
@@ -79,20 +87,29 @@ contains
         r = b - matvec(matrix, x)
         rs = 1.0d0
         p = r
+        ps = rs
 
-        q = matvec(matrix, p)
-        qs = matvec(hermitian(matrix) , ps)
-        dot_product_r = dot_product(rs, r)
-        alpha = dot_product_r / dot_product(ps, q)
-        x = x + alpha * p
-        r = r - alpha * q
-        rs = rs - conjg(alpha) * qs
-        beta = dot_product(rs, r) / dot_product_r
-        p = r + beta * p
-        ps = rs + conjg(beta) * ps
+        iter = 0
+        error = norm(r) / norm (b)
+        print *, iter, error
+        do while(error > MIN_ERROR .and. iter <= MAX_ITER)
+            q = matvec(matrix, p)
+            qs = matvec(hermitian(matrix) , ps)
+            dot_product_r = dot_product(rs, r)
+            alpha = dot_product_r / dot_product(ps, q)
+            x = x + alpha * p
+            r = r - alpha * q
+            rs = rs - conjg(alpha) * qs
+            beta = dot_product(rs, r) / dot_product_r
+            p = r + beta * p
+            ps = rs + conjg(beta) * ps
+
+            iter = iter + 1
+            error = norm(r) / norm (b)
+            print *, iter, error
+        end do
 
         deallocate(r, rs, q, qs, p, ps)
-
     end subroutine bicg_method
 end module crs_matrix
 
@@ -100,6 +117,7 @@ program main
     use crs_matrix
     implicit none
     type(crs) :: matrix
+    complex(8), allocatable :: b(:)
     integer :: matrix_size
     real(8) :: gamma
     character :: arg*10
@@ -112,18 +130,21 @@ program main
     print *, matrix_size
     print *, gamma
 
-    call init(matrix, matrix_size, gamma)
+    call init(matrix, b, matrix_size, gamma)
 
     print *, "val=", matrix%val
     print *, "col=", matrix%col_ind
     print *, "row=", matrix%row_ptr
 
-    deallocate(matrix%val, matrix%col_ind, matrix%row_ptr)
+    call bicg_method(matrix, b)
+
+    deallocate(matrix%val, matrix%col_ind, matrix%row_ptr, b)
 
 contains
 
-    subroutine init(matrix, matrix_size, gamma)
+    subroutine init(matrix, b, matrix_size, gamma)
         type(crs), intent(out) :: matrix
+        complex(8), allocatable, intent(out) :: b(:)
         integer, intent(in) :: matrix_size
         real(8), intent(in) :: gamma
         integer :: i, j
@@ -131,6 +152,7 @@ contains
 
         val_num = matrix_size * 3 - 2
         allocate(matrix%val(val_num), matrix%col_ind(val_num), matrix%row_ptr(matrix_size + 1))
+        allocate(b(matrix_size))
 
         j = 1
         do i = 1, matrix_size
@@ -150,5 +172,8 @@ contains
             end if
         end do
         matrix%row_ptr(matrix_size + 1) = j
+
+        b = 1.d0
+        b = matvec(matrix, b)
     end subroutine init
 end program main
