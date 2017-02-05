@@ -22,6 +22,48 @@ contains
             end do
         end do
     end function matvec
+
+    function hermitian(matrix) result(r)
+        type(crs), intent(in) :: matrix
+        type(crs) :: r
+        integer :: col, row, matrix_val_num, r_val_num, val_size, dim
+
+        val_size = size(matrix%val)
+        dim = size(matrix%row_ptr) - 1
+
+        allocate(r%val(val_size), r%col_ind(val_size), r%row_ptr(dim + 1))
+
+        r_val_num = 1
+        do col = 1, dim
+            r%row_ptr(col) = r_val_num
+            do matrix_val_num = 1, val_size
+                if(matrix%col_ind(matrix_val_num) == col) then
+                    r%val(r_val_num) = matrix%val(matrix_val_num)
+                    r%col_ind(r_val_num) = get_row(matrix_val_num, matrix%row_ptr)
+                    r_val_num = r_val_num + 1
+                end if
+            end do
+        end do
+        r%row_ptr(dim + 1) = r_val_num
+
+    contains
+
+        function get_row(val_num, row_ptr) result(r)
+            integer, intent(in) :: val_num
+            integer, intent(in) :: row_ptr(:)
+            integer :: r
+            integer :: row, dim
+
+            dim = size(row_ptr)
+            do row = 1, dim
+                if(val_num < row_ptr(row)) then
+                    r = row - 1
+                    exit
+                end if
+            end do
+        end function get_row
+
+    end function hermitian
 end module crs_matrix
 
 program main
