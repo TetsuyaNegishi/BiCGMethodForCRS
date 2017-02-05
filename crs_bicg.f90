@@ -3,6 +3,25 @@ module crs_matrix
         complex(8), allocatable :: val(:)
         integer, allocatable :: col_ind(:), row_ptr(:)
     end type crs
+
+contains
+
+    function matvec(matrix, vec) result(r)
+        type(crs), intent(in) :: matrix
+        complex(8), intent(in) :: vec(:)
+        complex(8), allocatable :: r(:)
+        integer :: i, j, dim
+
+        dim = size(vec)
+        allocate(r(dim))
+
+        r = 0.0d0
+        do i = 1, dim
+            do j = matrix%row_ptr(i), matrix%row_ptr(i + 1) - 1
+                r(i) = r(i) + matrix%val(j) * vec(matrix%col_ind(j))
+            end do
+        end do
+    end function matvec
 end module crs_matrix
 
 program main
