@@ -127,14 +127,7 @@ program main
     call getarg(2, arg)
     read(arg, *) gamma
 
-    print *, matrix_size
-    print *, gamma
-
     call init(matrix, b, matrix_size, gamma)
-
-    print *, "val=", matrix%val
-    print *, "col=", matrix%col_ind
-    print *, "row=", matrix%row_ptr
 
     call bicg_method(matrix, b)
 
