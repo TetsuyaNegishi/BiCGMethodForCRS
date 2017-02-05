@@ -8,8 +8,8 @@ end module crs_matrix
 program main
     use crs_matrix
     implicit none
-    integer matrix_size
-    real(8) gamma
+    integer :: matrix_size
+    real(8) :: gamma
     character :: arg*10
 
     call getarg(1, arg)
