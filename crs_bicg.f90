@@ -1,13 +1,14 @@
 module crs_matrix
     type crs
-        complex(8), allocatable :: val
-        integer, allocatable :: col_int, row_ptr
-    end type ers
+        complex(8), allocatable :: val(:)
+        integer, allocatable :: col_int(:), row_ptr(:)
+    end type crs
 end module crs_matrix
 
 program main
     use crs_matrix
     implicit none
+    type(crs) :: matrix
     integer :: matrix_size
     real(8) :: gamma
     character :: arg*10
